@@ -4,6 +4,7 @@ license:             MIT
 author:              "Daniel Firth"
 maintainer:          "dan.firth@homotopic.tech"
 copyright:           "2020 Daniel Firth"
+category:            Filesystem
 
 extra-source-files:
 - README.md
