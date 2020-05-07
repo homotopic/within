@@ -16,6 +16,7 @@ description:         Simple type for representing a well-typed path within anoth
 dependencies:
 - base >= 4.7 && < 5
 - exceptions
+- hashable
 - path
 
 library:

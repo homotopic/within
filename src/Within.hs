@@ -17,6 +17,7 @@ module Within (
 
 import Control.Monad.Catch
 import Data.Typeable
+import Data.Hashable
 import GHC.Generics
 import Path
 
@@ -24,6 +25,12 @@ import Path
 -- The two halves can be manipulated independently.
 newtype Within a t = Within (Path a Dir, Path Rel t)
   deriving (Typeable, Generic, Eq, Show)
+
+instance Hashable (Within a t) where
+  hashWithSalt n w = hashWithSalt n (fromWithin w)
+
+instance Ord (Within a t) where
+  compare (Within (x, y)) (Within (x',y')) = compare x x' <> compare y y'
 
 -- | Convert a `Within` to a `Path` by joining it with a path separator.
 fromWithin :: Within a t -> Path a t
