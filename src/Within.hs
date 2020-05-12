@@ -1,87 +1,102 @@
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveFoldable        #-}
+{-# LANGUAGE DeriveFunctor         #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE DeriveTraversable     #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module Within (
-  Within(..)
-, fromWithin
-, toWithin
-, within
+  WithinT(..)
+, Within(..)
+, localDir
+, localDirM
 , asWithin
-, whatLiesWithin
-, mapWithin
-, mapWithinT
-, moveWithin
-, moveWithinT
-, blinkWithin
-, moveAndMapT
-, blinkAndMapT
+, within
+, fromWithin
+, blinkLocalDir
+, blinkAndMap
+, blinkAndMapM
+, localDirAndMapM
 ) where
 
-import Control.Monad.Catch
-import Data.Typeable
-import Data.Hashable
-import GHC.Generics
-import Path
+import           Control.Applicative
+import           Control.Comonad
+import           Control.Comonad.Env
+import           Control.Monad
+import           Control.Monad.Catch
+import           Data.Functor.Identity
+import           Data.Hashable
+import           Data.Typeable
+import           GHC.Generics
+import           Path
 
--- | The `Within` type represents a relative `Path` inside a directory `Path`.
--- The two halves can be manipulated independently.
-newtype Within a t = Within (Path a Dir, Path Rel t)
-  deriving (Typeable, Generic, Eq, Show)
+-- | Transform the environment of an `EnvT` via some monadic operation. This didn't seem to
+-- exist anywhere but it used for some internal operations.
+localM :: Monad m => (e -> m e') -> EnvT e w a -> m (EnvT e' w a)
+localM f (EnvT e wa) = f e >>= \e' -> return $ EnvT e' wa
 
-instance Hashable (Within a t) where
-  hashWithSalt n w = hashWithSalt n (fromWithin w)
+-- | The Within Type, newtype wrapper around `EnvT` specialised to a `Path b Dir` environment.
+newtype WithinT b w a = WithinT (EnvT (Path b Dir) w a)
+  deriving (Functor, Foldable, Traversable)
 
-instance Ord (Within a t) where
-  compare (Within (x, y)) (Within (x',y')) = compare x x' <> compare y y'
+type Within b a = WithinT b Identity a
 
--- | Convert a `Within` to a `Path` by joining it with a path separator.
-fromWithin :: Within a t -> Path a t
-fromWithin (Within (x,y)) = x </> y
+instance Comonad w => Comonad (WithinT b w) where
+  extract (WithinT w) = extract w
+  duplicate (WithinT w) = WithinT (extend WithinT w)
 
--- | Convert a directory `Path` and a relative `Path` to a `Within`
-toWithin :: Path a Dir -> Path Rel t -> Within a t
-toWithin = flip within
+instance Comonad w => ComonadEnv (Path b Dir) (WithinT b w) where
+  ask (WithinT w) = ask w
 
--- | Infix version of `toWithin`, e.g "file.txt \`within\` myDir"
-within :: Path Rel t -> Path a Dir -> Within a t
-within y x = Within (x,y)
+instance ComonadTrans (WithinT b) where
+  lower (WithinT w) = lower w
 
--- | Attempts to convert a `Path` to a `Within` by treating it as if it were
--- within the second argument. Used infix as "myParentDir\/foo\/file.txt \`asWithin\` myParentDir"
-asWithin :: MonadThrow m => Path a t -> Path a Dir -> m (Within a t)
-asWithin x y = stripProperPrefix y x >>= \z -> return (Within (y, z))
+-- | Change the parent directory of a `Within` value.
+localDir :: (Path b Dir -> Path c Dir) -> WithinT b w a -> WithinT c w a
+localDir f (WithinT w) = WithinT (local f w)
 
--- | Extracts the inner path.
-whatLiesWithin :: Within a t -> Path Rel t
-whatLiesWithin (Within (_,y)) = y
+-- | Change the parent directory of a `Within` value, monadic verison.
+localDirM :: Monad m => (Path b Dir -> m (Path c Dir)) -> WithinT b w a -> m (WithinT c w a)
+localDirM f (WithinT (EnvT e wa)) = f e >>= \e' -> return $ WithinT $ EnvT e' wa
 
--- | Map the inner part of the `Within` value to a new `Path`.
-mapWithin :: (Path Rel s -> Path Rel t) -> Within a s -> Within a t
-mapWithin f (Within (x,y)) = Within (x, f y)
+-- | Treat a `Path` as if it lies within another directory and returns an Env value.
+-- Used infix like
+--
+-- >>> $(mkRelFile "foo/a.txt") `asWithin` $(mkRelDir "foo")
+--
+asWithin :: MonadThrow m => Path a t -> Path a Dir -> m (Within a (Path Rel t))
+asWithin x y = stripProperPrefix y x >>= \z -> return (WithinT (EnvT y (Identity z)))
 
--- | Map the inner part of the `Within` value to a new `Path` with an operation that may throw.
-mapWithinT :: MonadThrow m => (Path Rel s -> m (Path Rel t)) -> Within a s -> m (Within a t)
-mapWithinT f (Within (x,y)) = f y >>= \z -> return (Within (x, z))
+-- | Synonym for `flip env`, put a relative path inside a directory.
+--
+-- >>> $(mkRelFile "a.txt") `within` $(mkRelDir "foo")
+within :: a -> Path b Dir -> Within b a
+within x y = WithinT (EnvT y (Identity x))
 
--- | Switch the outer part of a `Within` value to a new directory immediately.
-blinkWithin :: Path b Dir -> Within a t -> Within b t
-blinkWithin = moveWithin . const
+-- | Turns an `Env` directory containing a path into a single path.
+fromWithin :: Within a (Path Rel t) -> Path a t
+fromWithin = liftA2 (</>) ask extract
 
--- | Map the outer part of a `Within` value via a function that changes the directory.
-moveWithin :: (Path a Dir -> Path b Dir) -> Within a t -> Within b t
-moveWithin f (Within (x,y)) = Within (f x, y)
+instance Eq t => Eq (Within b t) where
+  WithinT (EnvT e (Identity a)) == WithinT (EnvT e' (Identity a')) = e == e' && a == a'
 
--- | Map the outer part of a `Within` value via a function that changes the directory with an operation that may throw.
-moveWithinT :: MonadThrow m => (Path a Dir -> m (Path b Dir)) -> Within a t -> m (Within b t)
-moveWithinT f (Within (x,y)) = f x >>= \z -> return (Within (z,y))
+instance Hashable t => Hashable (Within b t) where
+  hashWithSalt n (WithinT (EnvT e (Identity a))) = n `hashWithSalt` e `hashWithSalt` a
 
--- | `blinkWithin` and `mapWithinT` simultaneously.
-blinkAndMapT :: MonadThrow m => Path b Dir -> (Path Rel s -> m (Path Rel t)) -> Within a s -> m (Within b t)
-blinkAndMapT k g (Within (_,y)) = do
-  y' <- g y
-  return $ Within (k, y')
+instance Show t => Show (Within b t) where
+  show (WithinT (EnvT e a)) = show e ++ "/" ++ show a
 
--- | `moveWithinT` and `mapWithinT` simultaneously.
-moveAndMapT :: MonadThrow m => (Path a Dir -> m (Path b Dir)) -> (Path Rel s -> m (Path Rel t)) -> Within a s -> m (Within b t)
-moveAndMapT f g (Within (x,y)) = do
-  x' <- f x
-  y' <- g y
-  return $ Within (x', y')
+-- | Switch the outer part of a `Within` value to a new directory, synonym for localDir . const
+blinkLocalDir :: Path b Dir -> WithinT a w t -> WithinT b w t
+blinkLocalDir = localDir . const
+
+-- | Switch the outer part of a `Within` value to a new directory and map the inner at the same time.
+blinkAndMap :: Functor w => Path b Dir -> (s -> t) -> WithinT a w s -> WithinT b w t
+blinkAndMap k g = blinkLocalDir k . fmap g
+
+-- | Switch the outer part of a `Within` value to a new directory and mapM the inner at the same time.
+blinkAndMapM :: (Monad m, Traversable w) => (Path b Dir) -> (s -> m t) -> WithinT a w s -> m (WithinT b w t)
+blinkAndMapM k g = mapM g . blinkLocalDir k
+
+-- | MapM the outer and inner part of a `Within` value at the same time.
+localDirAndMapM :: (Monad m, Traversable w) => (Path b Dir -> m (Path c Dir)) -> (s -> m t) -> WithinT b w s -> m (WithinT c w t)
+localDirAndMapM f g = localDirM f <=< mapM g
