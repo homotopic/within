@@ -1,11 +1,12 @@
 {-# LANGUAGE DeriveFoldable        #-}
 {-# LANGUAGE DeriveFunctor         #-}
+{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DeriveTraversable     #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 module Within (
   WithinT(..)
-, Within(..)
+, Within
 , localDir
 , localDirM
 , asWithin
@@ -28,14 +29,9 @@ import           Data.Typeable
 import           GHC.Generics
 import           Path
 
--- | Transform the environment of an `EnvT` via some monadic operation. This didn't seem to
--- exist anywhere but it used for some internal operations.
-localM :: Monad m => (e -> m e') -> EnvT e w a -> m (EnvT e' w a)
-localM f (EnvT e wa) = f e >>= \e' -> return $ EnvT e' wa
-
 -- | The Within Type, newtype wrapper around `EnvT` specialised to a `Path b Dir` environment.
 newtype WithinT b w a = WithinT (EnvT (Path b Dir) w a)
-  deriving (Functor, Foldable, Traversable)
+  deriving (Typeable, Generic, Functor, Foldable, Traversable)
 
 type Within b a = WithinT b Identity a
 
@@ -82,7 +78,10 @@ instance Hashable t => Hashable (Within b t) where
   hashWithSalt n (WithinT (EnvT e (Identity a))) = n `hashWithSalt` e `hashWithSalt` a
 
 instance Show t => Show (Within b t) where
-  show (WithinT (EnvT e a)) = show e ++ "/" ++ show a
+  show (WithinT (EnvT e (Identity a))) = show e ++ "/" ++ show a
+
+instance Ord t => Ord (Within b t) where
+  compare (WithinT (EnvT e (Identity a))) (WithinT (EnvT e' (Identity a'))) = compare e e' <> compare a a'
 
 -- | Switch the outer part of a `Within` value to a new directory, synonym for localDir . const
 blinkLocalDir :: Path b Dir -> WithinT a w t -> WithinT b w t
