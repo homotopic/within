@@ -1,5 +1,11 @@
 # Changelog for within
 
+## v0.1.0.0
+
+Change approach to `ComonadEnv` style newtype. `Within` can now store an arbitrary
+inner type whilst maintaining the convenience functions in the special case where
+the inner type is a `Path`.
+
 ## v0.0.2.0
 
 * Add `Hashable` and `Ord` instances for `Within`.

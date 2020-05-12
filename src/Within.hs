@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveFoldable        #-}
 {-# LANGUAGE DeriveFunctor         #-}
-{-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DeriveTraversable     #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -94,7 +93,7 @@ blinkAndMap :: Functor w => Path b Dir -> (s -> t) -> WithinT a w s -> WithinT b
 blinkAndMap k g = blinkLocalDir k . fmap g
 
 -- | Switch the outer part of a `Within` value to a new directory and mapM the inner at the same time.
-blinkAndMapM :: (Monad m, Traversable w) => (Path b Dir) -> (s -> m t) -> WithinT a w s -> m (WithinT b w t)
+blinkAndMapM :: (Monad m, Traversable w) => Path b Dir -> (s -> m t) -> WithinT a w s -> m (WithinT b w t)
 blinkAndMapM k g = mapM g . blinkLocalDir k
 
 -- | MapM the outer and inner part of a `Within` value at the same time.
