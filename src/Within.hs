@@ -57,7 +57,7 @@ localDir f (WithinT w) = WithinT (local f w)
 localDirM :: Monad m => (Path b Dir -> m (Path c Dir)) -> WithinT b w a -> m (WithinT c w a)
 localDirM f (WithinT (EnvT e wa)) = f e >>= \e' -> return $ WithinT $ EnvT e' wa
 
--- | Treat a `Path` as if it lies within another directory and returns an Env value.
+-- | Treat a `Path` as if it lies within another directory and returns a `Within` value.
 -- Used infix like
 --
 -- >>> $(mkRelFile "foo/a.txt") `asWithin` $(mkRelDir "foo")
@@ -65,13 +65,13 @@ localDirM f (WithinT (EnvT e wa)) = f e >>= \e' -> return $ WithinT $ EnvT e' wa
 asWithin :: MonadThrow m => Path a t -> Path a Dir -> m (Within a (Path Rel t))
 asWithin x y = stripProperPrefix y x >>= \z -> return (WithinT (EnvT y (Identity z)))
 
--- | Synonym for `flip env`, put a relative path inside a directory.
+-- | Put a value inside a directory.
 --
 -- >>> $(mkRelFile "a.txt") `within` $(mkRelDir "foo")
 within :: a -> Path b Dir -> Within b a
 within x y = WithinT (EnvT y (Identity x))
 
--- | Turns an `Env` directory containing a path into a single path.
+-- | Turns a `Within` containing a path into a single path.
 fromWithin :: Within a (Path Rel t) -> Path a t
 fromWithin = liftA2 (</>) ask extract
 
@@ -96,6 +96,6 @@ blinkAndMap k g = blinkLocalDir k . fmap g
 blinkAndMapM :: (Monad m, Traversable w) => Path b Dir -> (s -> m t) -> WithinT a w s -> m (WithinT b w t)
 blinkAndMapM k g = mapM g . blinkLocalDir k
 
--- | MapM the outer and inner part of a `Within` value at the same time.
+-- | mapM the outer and inner part of a `Within` value at the same time.
 localDirAndMapM :: (Monad m, Traversable w) => (Path b Dir -> m (Path c Dir)) -> (s -> m t) -> WithinT b w s -> m (WithinT c w t)
 localDirAndMapM f g = localDirM f <=< mapM g

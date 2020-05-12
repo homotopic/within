@@ -10,8 +10,8 @@ extra-source-files:
 - README.md
 - ChangeLog.md
 
-synopsis:            A path within another path.
-description:         Simple type for representing a well-typed path within another path. Useful for when you need to jump between directories and change filenames independently. Uses the path library.
+synopsis:            A value within another path.
+description:         Simple newtype for representing a value within a well-typed directory. Useful for when you need to jump between directories and change filenames independently. Uses the path library.
 
 dependencies:
 - base >= 4.7 && < 5
