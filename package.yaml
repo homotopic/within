@@ -1,6 +1,7 @@
 name:                within
 version:             0.1.0.0
 license:             MIT
+git:                 https://gitlab.com/homotopic-tech/within
 author:              "Daniel Firth"
 maintainer:          "dan.firth@homotopic.tech"
 copyright:           "2020 Daniel Firth"
