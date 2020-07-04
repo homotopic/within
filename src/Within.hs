@@ -1,7 +1,9 @@
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE DeriveTraversable     #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances  #-}
 module Within (
   WithinT(..)
 , Within
@@ -26,6 +28,7 @@ import           Data.Hashable
 import           Data.Typeable
 import           GHC.Generics
 import           Path
+import           Path.Like
 
 -- | The Within Type, newtype wrapper around `EnvT` specialised to a `Path b Dir` environment.
 newtype WithinT b w a = WithinT (EnvT (Path b Dir) w a)
@@ -66,8 +69,11 @@ within :: a -> Path b Dir -> Within b a
 within x y = WithinT (EnvT y (Identity x))
 
 -- | Turns a `Within` containing a path into a single path.
-fromWithin :: Within a (Path Rel t) -> Path a t
-fromWithin = liftA2 (</>) ask extract
+fromWithin :: PathLike Rel t a => Within b a -> Path b t
+fromWithin = liftA2 (</>) ask (toPath . extract)
+
+instance PathLike Rel t a => PathLike b t (Within b a) where
+  toPath = fromWithin
 
 instance Eq t => Eq (Within b t) where
   WithinT (EnvT e (Identity a)) == WithinT (EnvT e' (Identity a')) = e == e' && a == a'

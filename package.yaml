@@ -1,5 +1,5 @@
 name:                within
-version:             0.1.0.1
+version:             0.2.0.0
 license:             MIT
 git:                 https://gitlab.com/homotopic-tech/within
 author:              "Daniel Firth"
@@ -21,6 +21,7 @@ dependencies:
 - exceptions
 - hashable
 - path
+- path-like >= 0.2.0.0
 
 ghc-options:
 - -Wall

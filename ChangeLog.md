@@ -1,10 +1,14 @@
 # Changelog for within
 
+## v0.2.0.0
+
+* Add [path-like](https://hackage.haskell.org/package/path-like) and `PathLike` instance.
+
 ## v0.1.0.0
 
-Change approach to `ComonadEnv` style newtype. `Within` can now store an arbitrary
-inner type whilst maintaining the convenience functions in the special case where
-the inner type is a `Path`.
+* Change approach to `ComonadEnv` style newtype. `Within` can now store an arbitrary
+  inner type whilst maintaining the convenience functions in the special case where
+  the inner type is a `Path`.
 
 ## v0.0.2.0
 
