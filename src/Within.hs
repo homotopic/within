@@ -68,7 +68,7 @@ asWithin x y = stripProperPrefix y x >>= \z -> return (WithinT (EnvT y (Identity
 within :: a -> Path b Dir -> Within b a
 within x y = WithinT (EnvT y (Identity x))
 
--- | Turns a `Within` containing a path into a single path.
+-- | Turns a `Within` containing a `PathLike` into a single `Path`.
 fromWithin :: PathLike Rel t a => Within b a -> Path b t
 fromWithin = liftA2 (</>) ask (toPath . extract)
 
