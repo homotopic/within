@@ -4,6 +4,15 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances  #-}
+{- |
+   Module     : Path.Like
+   Copyright  : Copyright (C) 2020 Daniel Firth
+   Maintainer : Daniel Firth <dan.firth@homotopic.tech>
+   License    : MIT
+   Stability  : experimental
+
+The Within type, an EnvT comonad specialised to `Path b Dir`.
+-}
 module Within (
   WithinT(..)
 , Within
