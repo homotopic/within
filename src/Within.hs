@@ -84,6 +84,9 @@ fromWithin = liftA2 (</>) ask (toPath . extract)
 instance PathLike Rel t a => PathLike b t (Within b a) where
   toPath = fromWithin
 
+instance FileLike Rel a => FileLike b (Within b a)
+instance DirLike Rel a => DirLike b (Within b a)
+
 instance Eq t => Eq (Within b t) where
   WithinT (EnvT e (Identity a)) == WithinT (EnvT e' (Identity a')) = e == e' && a == a'
 
