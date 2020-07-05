@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: path-like-0.1.2.0@sha256:cffe900d1cd122f3a8e7455141fe8bbfd199c6e6d052392b99054f487ac0eca6,1055
+    hackage: path-like-0.2.0.0@sha256:5131cca273832663f16d0d55cf58600d6c7ba57feb970f9b1681878f9788a38e,1055
     pantry-tree:
       size: 264
-      sha256: a959ad87f2bb52b16bbf7d301686ab3bd28f7fd4391ea2d562b53d44691457db
+      sha256: 053f6b81d9249d4f63a83bec2b75915ed789bd7676ed6cf61cd4526a3936548b
   original:
-    hackage: path-like-0.1.2.0
+    hackage: path-like-0.2.0.0
 snapshots:
 - completed:
     size: 531674
