@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8717fa1b57121b98ec2dc642105acd188f8ca914cbebaf65a0cf02877a3529ee
+-- hash: 9b010022903625089f68a70abcb63318b0d2529bab508e2540838dd08ee71ac6
 
 name:           within
-version:        0.2.0.0
+version:        0.2.0.1
 synopsis:       A value within another path.
 description:    Simple newtype for representing a value within a well-typed directory. Useful for when you need to jump between directories and change filenames independently. Uses the path library.
 category:       Filesystem
